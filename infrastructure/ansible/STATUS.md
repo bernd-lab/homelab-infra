@@ -1,7 +1,7 @@
 # Ansible-Provisionierung Status
 
 **Datum**: 2025-11-28
-**Status**: In Arbeit
+**Status**: Kubernetes Master läuft ✅
 
 ## Abgeschlossen
 
@@ -23,29 +23,32 @@
 - Repository konfiguriert
 
 ✅ **Kubernetes Master** (homelab):
-- kubeadm init ausgeführt (Cluster bereits initialisiert)
+- kubeadm init ausgeführt
 - kubeconfig vorhanden
+- **API-Server läuft** (Port 6443 gebunden)
+- Control-Plane-Pods laufen (etcd, kube-apiserver, kube-scheduler, kube-controller-manager)
+- Flannel CNI installiert
 
-## Probleme
+## Problem gelöst
 
-⚠️ **Kubernetes API-Server**:
-- API-Server läuft nicht (Port 6443 nicht erreichbar)
-- kubelet läuft möglicherweise nicht
-- Control-Plane-Pods starten nicht
-
-**Nächste Schritte**:
-1. kubelet-Status prüfen
-2. Control-Plane-Pods prüfen
-3. Logs analysieren
-4. ggf. kubelet neu starten
+✅ **Kubernetes API-Server**:
+- Problem: API-Server crashte (Exit Code 137)
+- Lösung: kubelet neu gestartet, API-Server läuft jetzt stabil
+- Port 6443 ist gebunden und erreichbar
 
 ## Offen
 
 - ⏳ Kubernetes Workers (benötigen sudo ohne Passwort)
-- ⏳ Flannel CNI (benötigt laufenden API-Server)
+- ⏳ Flannel CNI vollständig funktionsfähig (prüfen)
 - ⏳ GitLab CI/CD Integration (Phase 1)
 
 ## GitHub
 
 ✅ Repository erstellt und gepusht: https://github.com/bernd-lab/homelab-infra
 
+## Nächste Schritte
+
+1. Worker-Nodes konfigurieren (sudo ohne Passwort)
+2. Kubernetes Workers installieren
+3. Cluster vollständig testen
+4. GitLab CI/CD Integration (Phase 1)
