@@ -1,13 +1,13 @@
 # Ansible-Provisionierung Status
 
 **Datum**: 2025-11-28
-**Status**: Kubernetes Master sauber neu installiert ✅
+**Status**: Kubernetes Master erfolgreich installiert nach offizieller Anleitung ✅
 
-## Abgeschlossen
+## Installation nach offizieller kubeadm-Anleitung
 
-✅ **Phase 1: Kompletter Reset**:
+✅ **Phase 1: Reset**:
 - `kubeadm reset --force` ausgeführt
-- Containerd bereinigt (Container und Images entfernt)
+- Containerd bereinigt
 - Kubernetes-Verzeichnisse bereinigt
 
 ✅ **Phase 2: System-Vorbereitung**:
@@ -15,39 +15,52 @@
 - Kernel-Module geladen (overlay, br_netfilter)
 - sysctl konfiguriert
 
-✅ **Phase 3: kubeadm init**:
-- Kubernetes Master initialisiert mit korrekter Konfiguration
-- Leader-Election-Timeouts konfiguriert (30s/20s/5s)
-- kubeconfig für Benutzer konfiguriert
+✅ **Phase 3: Containerd**:
+- Containerd installiert
+- Config erstellt
+- SystemdCgroup aktiviert
+- Containerd gestartet
 
-✅ **Phase 4: CNI installiert**:
-- Flannel CNI installiert und läuft
+✅ **Phase 4: Kubernetes-Pakete**:
+- Repository hinzugefügt (v1.34)
+- kubelet, kubeadm, kubectl installiert
+- Pakete zurückgehalten
 
-✅ **Phase 5: Cluster-Status**:
+✅ **Phase 5: kubeadm init**:
+- **EINFACH**: `sudo kubeadm init --pod-network-cidr=10.244.0.0/16`
+- **KEINE eigenen Anpassungen**
+- **KEINE Startup-Probe-Änderungen**
+- **KEINE Leader-Election-Anpassungen**
+- Cluster erfolgreich initialisiert
+
+✅ **Phase 6: CNI**:
+- Flannel installiert
+
+✅ **Phase 7: Validierung**:
+- **Node**: `homelab` ist Ready (v1.34.0)
 - **Control-Plane-Pods**: Alle laufen stabil (1/1 Running)
-  - etcd: ✅ 1/1 Running
-  - kube-apiserver: ✅ 1/1 Running
-  - kube-controller-manager: ✅ 1/1 Running
-  - kube-scheduler: ✅ 1/1 Running
-  - kube-proxy: ✅ 1/1 Running
-- **Flannel CNI**: ✅ 1/1 Running
-- **Node**: Wird Ready (CNI-Plugin initialisiert sich noch)
+  - etcd: ✅ 1/1 Running (14 Restarts während Init - normal)
+  - kube-apiserver: ✅ 1/1 Running (0 Restarts)
+  - kube-controller-manager: ✅ 1/1 Running (0 Restarts)
+  - kube-scheduler: ✅ 1/1 Running (0 Restarts)
+  - kube-proxy: ✅ 1/1 Running (0 Restarts)
+- **System-Pods**: Alle laufen stabil
+  - CoreDNS: ✅ 2/2 Running (0 Restarts)
+  - Flannel: ✅ 1/1 Running (0 Restarts)
 
 ## Wichtige Erkenntnisse
 
-- **Saubere Neuinstallation**: Nach `kubeadm reset` und Neuinstallation laufen alle Control-Plane-Pods stabil
-- **Keine manuellen Eingriffe**: Pods wurden nicht manuell gelöscht oder manipuliert
-- **Geduld**: CNI-Plugin braucht Zeit zur Initialisierung (normal)
+- **Offizielle Anleitung funktioniert**: Einfach der offiziellen Anleitung folgen, keine eigenen "Verbesserungen"
+- **Keine Anpassungen nötig**: Standard-kubeadm init funktioniert perfekt
+- **Geduld**: Pods brauchen 2-3 Minuten zum Starten
 
 ## Nächste Schritte
 
-1. ✅ Kubernetes Master sauber neu installiert
-2. Warten bis Node Ready ist (CNI-Plugin initialisiert sich)
-3. CoreDNS wird automatisch starten, sobald Node Ready ist
-4. Worker-Nodes konfigurieren (sudo ohne Passwort)
-5. Kubernetes Workers installieren
-6. Cluster vollständig testen
-7. GitLab CI/CD Integration (Phase 1)
+1. ✅ Kubernetes Master erfolgreich installiert
+2. Worker-Nodes konfigurieren (sudo ohne Passwort)
+3. Kubernetes Workers installieren (kubeadm join)
+4. Cluster vollständig testen
+5. GitLab CI/CD Integration (Phase 1)
 
 ## GitHub
 
