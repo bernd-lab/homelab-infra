@@ -1,30 +1,12 @@
 ---
 # Haupt-Playbook - Orchestriert alle anderen Playbooks
-- name: Complete Infrastructure Setup
-  hosts: all
-  become: yes
-  tasks:
-    - name: Include system-prep playbook
-      include: system-prep.yml
+# Führt die Playbooks in der richtigen Reihenfolge aus
 
-- name: Storage Setup
-  hosts: k8s_masters
-  become: yes
-  tasks:
-    - name: Include storage playbook
-      include: storage.yml
+- import_playbook: system-prep.yml
 
-- name: Kubernetes Master Setup
-  hosts: k8s_masters
-  become: yes
-  tasks:
-    - name: Include k8s-master playbook
-      include: k8s-master.yml
+- import_playbook: storage.yml
 
-- name: Kubernetes Workers Setup
-  hosts: k8s_workers
-  become: yes
-  tasks:
-    - name: Include k8s-workers playbook
-      include: k8s-workers.yml
+- import_playbook: k8s-master.yml
+
+- import_playbook: k8s-workers.yml
 

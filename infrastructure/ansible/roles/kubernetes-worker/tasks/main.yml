@@ -28,15 +28,6 @@
   command: apt-mark hold kubelet kubeadm kubectl
   changed_when: false
 
-- name: Hole kubeadm join Token vom Master
-  uri:
-    url: "http://192.168.178.54:6443/api/v1/namespaces/kube-system/configmaps/kubeadm-config"
-    method: GET
-    status_code: 200
-  delegate_to: homelab
-  register: kubeadm_config
-  failed_when: false
-
 - name: Extrahiere Join-Command vom Master
   shell: |
     kubeadm token create --print-join-command
@@ -45,9 +36,11 @@
     KUBECONFIG: /home/bernd/.kube/config
   register: join_command
   changed_when: false
+  failed_when: false
 
 - name: Führe kubeadm join aus
-  command: "{{ join_command.stdout }}"
+  shell: "{{ join_command.stdout }}"
   register: kubeadm_join
   changed_when: "'This node has joined the cluster' in kubeadm_join.stdout"
+  failed_when: "'error' in kubeadm_join.stderr and 'already a member' not in kubeadm_join.stderr"
 
