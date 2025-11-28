@@ -4,20 +4,10 @@
 kubernetes_role: master
 kubernetes_control_plane: true
 
-# kubeadm init Konfiguration
-kubeadm_init_config:
-  apiVersion: kubeadm.k8s.io/v1beta3
-  kind: InitConfiguration
-  localAPIEndpoint:
-    advertiseAddress: "192.168.178.54"
-    bindPort: 6443
-  nodeRegistration:
-    criSocket: unix:///run/containerd/containerd.sock
-  ---
-  apiVersion: kubeadm.k8s.io/v1beta3
-  kind: ClusterConfiguration
-  kubernetesVersion: "v1.34.0"
-  networking:
-    podSubnet: "10.244.0.0/16"
-  controlPlaneEndpoint: "192.168.178.54:6443"
+# kubeadm init Konfiguration (wird in Role als Template erstellt)
+kubeadm_init_advertise_address: "192.168.178.54"
+kubeadm_init_bind_port: 6443
+kubeadm_init_kubernetes_version: "v1.34.0"
+kubeadm_init_pod_subnet: "10.244.0.0/16"
+kubeadm_init_control_plane_endpoint: "192.168.178.54:6443"
 
