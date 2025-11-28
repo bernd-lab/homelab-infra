@@ -15,10 +15,10 @@
     - /mnt/data/backup
 
 - name: Prüfe ob SSD bereits gemountet ist
-  mount:
-    path: /mnt/k8s-db
-  register: ssd_mount
+  command: mountpoint -q /mnt/k8s-db
+  register: ssd_mount_check
   failed_when: false
+  changed_when: false
 
 - name: Mounte SSD für Datenbanken
   mount:
@@ -26,15 +26,21 @@
     src: "{{ storage_ssd_device }}"
     fstype: ext4
     state: mounted
-  when: not ssd_mount.mounted
+  when: ssd_mount_check.rc != 0
+
+- name: Hole UUID der SSD
+  command: blkid -s UUID -o value {{ storage_ssd_device }}
+  register: ssd_uuid
+  changed_when: false
+  when: ssd_mount_check.rc != 0
 
 - name: Erstelle fstab-Eintrag für SSD
   lineinfile:
     path: /etc/fstab
-    line: "UUID={{ ansible_mounts | selectattr('mount', 'equalto', '/mnt/k8s-db') | map(attribute='uuid') | first | default('') }} /mnt/k8s-db ext4 defaults 0 2"
+    line: "UUID={{ ssd_uuid.stdout }} /mnt/k8s-db ext4 defaults 0 2"
     regexp: '^UUID=.*\s/mnt/k8s-db\s'
     state: present
-  when: not ssd_mount.mounted
+  when: ssd_mount_check.rc != 0 and ssd_uuid.stdout is defined
 
 - name: Erstelle Verzeichnisse für Kubernetes-Datenbanken
   file:
