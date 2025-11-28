@@ -1,0 +1,8 @@
+---
+# System-Vorbereitung für alle Hosts
+- name: System-Vorbereitung
+  hosts: all
+  become: yes
+  roles:
+    - system-prep
+

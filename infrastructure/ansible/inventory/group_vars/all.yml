@@ -1,0 +1,23 @@
+---
+# Globale Variablen für alle Hosts
+
+# Kubernetes-Version
+kubernetes_version: "1.34"
+kubernetes_package_version: "1.34.0-1.1"
+
+# CNI
+cni_plugin: "flannel"
+cni_plugin_version: "latest"
+pod_network_cidr: "10.244.0.0/16"
+
+# Containerd
+containerd_version: "latest"
+containerd_systemd_cgroup: true
+
+# System-Konfiguration
+disable_swap: true
+load_kernel_modules: true
+
+# Ansible
+ansible_python_interpreter: /usr/bin/python3
+

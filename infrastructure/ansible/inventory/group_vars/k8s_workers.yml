@@ -1,0 +1,10 @@
+---
+# Variablen für Kubernetes Worker-Nodes
+
+kubernetes_role: worker
+kubernetes_control_plane: false
+
+# kubeadm join wird dynamisch vom Master geholt
+kubeadm_join_token: ""  # Wird vom Master geholt
+kubeadm_join_ca_hash: ""  # Wird vom Master geholt
+

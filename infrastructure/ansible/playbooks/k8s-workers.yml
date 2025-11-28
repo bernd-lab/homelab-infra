@@ -1,0 +1,10 @@
+---
+# Kubernetes Worker-Installation
+- name: Kubernetes Workers Setup
+  hosts: k8s_workers
+  become: yes
+  roles:
+    - system-prep
+    - containerd
+    - kubernetes-worker
+

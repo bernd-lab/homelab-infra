@@ -1,0 +1,53 @@
+---
+# System-Vorbereitung für Kubernetes
+# - Swap deaktivieren
+# - Kernel-Module laden
+# - sysctl konfigurieren
+
+- name: Deaktiviere Swap
+  command: swapoff -a
+  changed_when: false
+  failed_when: false
+
+- name: Kommentiere Swap-Einträge in fstab aus
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s)'
+    replace: '#\1'
+  when: disable_swap | default(true)
+
+- name: Lade Kernel-Module
+  modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+  when: load_kernel_modules | default(true)
+
+- name: Erstelle Kernel-Module-Konfiguration
+  copy:
+    content: |
+      overlay
+      br_netfilter
+    dest: /etc/modules-load.d/k8s.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: load_kernel_modules | default(true)
+
+- name: Konfiguriere sysctl für Kubernetes
+  copy:
+    content: |
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward                 = 1
+    dest: /etc/sysctl.d/k8s.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Wende sysctl-Konfiguration an
+  command: sysctl --system
+  changed_when: false
+

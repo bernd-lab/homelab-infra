@@ -1,0 +1,53 @@
+---
+# Kubernetes Worker-Installation
+
+- name: Installiere Kubernetes-Repository-Key
+  apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key
+    state: present
+
+- name: Füge Kubernetes-Repository hinzu
+  apt_repository:
+    repo: 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.34/deb/ /'
+    state: present
+    filename: kubernetes
+
+- name: Aktualisiere Paket-Liste
+  apt:
+    update_cache: yes
+
+- name: Installiere Kubernetes-Tools
+  apt:
+    name:
+      - kubelet={{ kubernetes_package_version }}
+      - kubeadm={{ kubernetes_package_version }}
+      - kubectl={{ kubernetes_package_version }}
+    state: present
+
+- name: Halte Kubernetes-Pakete zurück
+  command: apt-mark hold kubelet kubeadm kubectl
+  changed_when: false
+
+- name: Hole kubeadm join Token vom Master
+  uri:
+    url: "http://192.168.178.54:6443/api/v1/namespaces/kube-system/configmaps/kubeadm-config"
+    method: GET
+    status_code: 200
+  delegate_to: homelab
+  register: kubeadm_config
+  failed_when: false
+
+- name: Extrahiere Join-Command vom Master
+  shell: |
+    kubeadm token create --print-join-command
+  delegate_to: homelab
+  environment:
+    KUBECONFIG: /home/bernd/.kube/config
+  register: join_command
+  changed_when: false
+
+- name: Führe kubeadm join aus
+  command: "{{ join_command.stdout }}"
+  register: kubeadm_join
+  changed_when: "'This node has joined the cluster' in kubeadm_join.stdout"
+

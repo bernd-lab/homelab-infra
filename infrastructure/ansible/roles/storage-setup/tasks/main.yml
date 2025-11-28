@@ -1,0 +1,52 @@
+---
+# Storage-Konfiguration für Kubernetes
+
+- name: Erstelle Mount-Points
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /mnt/k8s-db
+    - /mnt/data/media
+    - /mnt/data/new
+    - /mnt/data/backup
+
+- name: Prüfe ob SSD bereits gemountet ist
+  mount:
+    path: /mnt/k8s-db
+  register: ssd_mount
+  failed_when: false
+
+- name: Mounte SSD für Datenbanken
+  mount:
+    path: /mnt/k8s-db
+    src: "{{ storage_ssd_device }}"
+    fstype: ext4
+    state: mounted
+  when: not ssd_mount.mounted
+
+- name: Erstelle fstab-Eintrag für SSD
+  lineinfile:
+    path: /etc/fstab
+    line: "UUID={{ ansible_mounts | selectattr('mount', 'equalto', '/mnt/k8s-db') | map(attribute='uuid') | first | default('') }} /mnt/k8s-db ext4 defaults 0 2"
+    regexp: '^UUID=.*\s/mnt/k8s-db\s'
+    state: present
+  when: not ssd_mount.mounted
+
+- name: Erstelle Verzeichnisse für Kubernetes-Datenbanken
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "999"
+    group: "999"
+    mode: '0755'
+  loop:
+    - /mnt/k8s-db/gitlab-postgres
+    - /mnt/k8s-db/gitlab-redis
+    - /mnt/k8s-db/netbox-postgres
+    - /mnt/k8s-db/netbox-redis
+    - /mnt/k8s-db/prometheus
+

@@ -1,0 +1,8 @@
+---
+# Storage-Konfiguration für Master-Node
+- name: Storage-Setup
+  hosts: k8s_masters
+  become: yes
+  roles:
+    - storage-setup
+

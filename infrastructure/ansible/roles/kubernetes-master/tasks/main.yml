@@ -1,0 +1,87 @@
+---
+# Kubernetes Master-Installation
+
+- name: Installiere Kubernetes-Repository-Key
+  apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key
+    state: present
+
+- name: Füge Kubernetes-Repository hinzu
+  apt_repository:
+    repo: 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.34/deb/ /'
+    state: present
+    filename: kubernetes
+
+- name: Aktualisiere Paket-Liste
+  apt:
+    update_cache: yes
+
+- name: Installiere Kubernetes-Tools
+  apt:
+    name:
+      - kubelet={{ kubernetes_package_version }}
+      - kubeadm={{ kubernetes_package_version }}
+      - kubectl={{ kubernetes_package_version }}
+    state: present
+
+- name: Halte Kubernetes-Pakete zurück
+  command: apt-mark hold kubelet kubeadm kubectl
+  changed_when: false
+
+- name: Erstelle kubeadm init Konfiguration
+  copy:
+    content: |
+      apiVersion: kubeadm.k8s.io/v1beta3
+      kind: InitConfiguration
+      localAPIEndpoint:
+        advertiseAddress: "192.168.178.54"
+        bindPort: 6443
+      nodeRegistration:
+        criSocket: unix:///run/containerd/containerd.sock
+      ---
+      apiVersion: kubeadm.k8s.io/v1beta3
+      kind: ClusterConfiguration
+      kubernetesVersion: "v{{ kubernetes_version }}.0"
+      networking:
+        podSubnet: "{{ pod_network_cidr }}"
+      controlPlaneEndpoint: "192.168.178.54:6443"
+    dest: /tmp/kubeadm-init-config.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Initialisiere Kubernetes Master
+  command: kubeadm init --config=/tmp/kubeadm-init-config.yaml
+  register: kubeadm_init
+  changed_when: "'Your Kubernetes control-plane has initialized' in kubeadm_init.stdout"
+
+- name: Erstelle .kube-Verzeichnis für Benutzer
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Kopiere kubeconfig für Benutzer
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  when: kubeadm_init.changed
+
+- name: Installiere Flannel CNI
+  shell: |
+    kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+  when: kubeadm_init.changed
+  register: flannel_install
+  changed_when: "'created' in flannel_install.stdout or 'configured' in flannel_install.stdout"
+
+- name: Zeige kubeadm join Command
+  debug:
+    msg: "{{ kubeadm_init.stdout_lines | select('match', 'kubeadm join') | list | first }}"
+

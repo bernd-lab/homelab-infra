@@ -1,0 +1,44 @@
+---
+# Containerd Installation und Konfiguration
+
+- name: Installiere Containerd
+  package:
+    name: containerd
+    state: present
+    update_cache: yes
+
+- name: Erstelle Containerd-Konfigurationsverzeichnis
+  file:
+    path: /etc/containerd
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Generiere Standard-Containerd-Config
+  command: containerd config default
+  register: containerd_default_config
+  changed_when: false
+
+- name: Speichere Containerd-Config
+  copy:
+    content: "{{ containerd_default_config.stdout }}"
+    dest: /etc/containerd/config.toml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Setze SystemdCgroup in Containerd-Config
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: 'SystemdCgroup = false'
+    replace: 'SystemdCgroup = true'
+  when: containerd_systemd_cgroup | default(true)
+
+- name: Starte und aktiviere Containerd
+  systemd:
+    name: containerd
+    state: started
+    enabled: yes
+    daemon_reload: yes
+

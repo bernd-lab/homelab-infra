@@ -1,0 +1,10 @@
+---
+# Kubernetes Master-Installation
+- name: Kubernetes Master Setup
+  hosts: k8s_masters
+  become: yes
+  roles:
+    - system-prep
+    - containerd
+    - kubernetes-master
+
