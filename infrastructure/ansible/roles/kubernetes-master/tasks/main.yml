@@ -77,6 +77,11 @@
     group: "{{ ansible_user }}"
     mode: '0755'
 
+- name: Prüfe ob kubeconfig für Benutzer bereits existiert
+  stat:
+    path: "{{ ansible_env.HOME }}/.kube/config"
+  register: user_kubeconfig_exists
+
 - name: Kopiere kubeconfig für Benutzer
   copy:
     src: /etc/kubernetes/admin.conf
@@ -85,7 +90,7 @@
     group: "{{ ansible_user }}"
     mode: '0600'
     remote_src: yes
-  when: kubeconfig_exists.stat.exists and not (ansible_env.HOME + '/.kube/config' | exists)
+  when: kubeconfig_exists.stat.exists and not user_kubeconfig_exists.stat.exists
 
 - name: Prüfe ob Flannel bereits installiert ist
   shell: |
