@@ -112,5 +112,6 @@
 
 - name: Zeige kubeadm join Command
   debug:
-    msg: "{{ kubeadm_init.stdout_lines | select('match', 'kubeadm join') | list | first }}"
+    msg: "{{ kubeadm_init.stdout_lines | select('match', 'kubeadm join') | list | first | default('Cluster bereits initialisiert - verwende: kubeadm token create --print-join-command') }}"
+  when: kubeadm_init is defined and kubeadm_init.stdout_lines is defined
 
