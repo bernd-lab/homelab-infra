@@ -1,10 +1,17 @@
 ---
 # Kubernetes Master-Installation
 
-- name: Installiere Kubernetes-Repository-Key
-  apt_key:
+- name: Erstelle keyrings-Verzeichnis
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Lade Kubernetes GPG-Key
+  get_url:
     url: https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key
-    state: present
+    dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    mode: '0644'
 
 - name: Füge Kubernetes-Repository hinzu
   apt_repository:
